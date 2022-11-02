@@ -92,7 +92,8 @@ namespace
 
 set<frontend::InputMode> const CompilerInputModes{
 	frontend::InputMode::Compiler,
-	frontend::InputMode::CompilerWithASTImport
+	frontend::InputMode::CompilerWithASTImport,
+	frontend::InputMode::EVMAssemblerJSON
 };
 
 } // anonymous namespace
@@ -167,28 +168,58 @@ static bool coloredOutput(CommandLineOptions const& _options)
 		(_options.formatting.coloredOutput.has_value() && _options.formatting.coloredOutput.value());
 }
 
+void CommandLineInterface::handleEVMAssembly(string const& _contract)
+{
+	solAssert(CompilerInputModes.count(m_options.input.mode) == 1);
+
+	if (m_options.compiler.outputs.asm_ || m_options.compiler.outputs.asmJson)
+	{
+		string assembly;
+		if (m_options.compiler.outputs.asmJson)
+			assembly = util::jsonPrint(removeNullMembers(m_compiler->assemblyJSON(_contract)), m_options.formatting.json);
+		else
+			assembly = m_compiler->assemblyString(_contract, m_fileReader.sourceUnits());
+
+		if (!m_options.output.dir.empty())
+			createFile(
+				m_compiler->filesystemFriendlyName(_contract) +
+				(m_options.compiler.outputs.asmJson ? "_evm.json" : ".evm"),
+				assembly
+			);
+		else
+			sout() << "EVM assembly:" << endl << assembly << endl;
+	}
+}
+
 void CommandLineInterface::handleBinary(string const& _contract)
 {
 	solAssert(CompilerInputModes.count(m_options.input.mode) == 1);
 
+	string binary;
+	string binaryRuntime;
+	if (m_options.compiler.outputs.binary)
+		binary = objectWithLinkRefsHex(m_compiler->object(_contract));
+	if (m_options.compiler.outputs.binaryRuntime)
+		binaryRuntime = objectWithLinkRefsHex(m_compiler->runtimeObject(_contract));
+
 	if (m_options.compiler.outputs.binary)
 	{
 		if (!m_options.output.dir.empty())
-			createFile(m_compiler->filesystemFriendlyName(_contract) + ".bin", objectWithLinkRefsHex(m_compiler->object(_contract)));
+			createFile(m_compiler->filesystemFriendlyName(_contract) + ".bin", binary);
 		else
 		{
 			sout() << "Binary:" << endl;
-			sout() << objectWithLinkRefsHex(m_compiler->object(_contract)) << endl;
+			sout() << binary << endl;
 		}
 	}
 	if (m_options.compiler.outputs.binaryRuntime)
 	{
 		if (!m_options.output.dir.empty())
-			createFile(m_compiler->filesystemFriendlyName(_contract) + ".bin-runtime", objectWithLinkRefsHex(m_compiler->runtimeObject(_contract)));
+			createFile(m_compiler->filesystemFriendlyName(_contract) + ".bin-runtime", binaryRuntime);
 		else
 		{
 			sout() << "Binary of the runtime part:" << endl;
-			sout() << objectWithLinkRefsHex(m_compiler->runtimeObject(_contract)) << endl;
+			sout() << binaryRuntime << endl;
 		}
 	}
 }
@@ -197,12 +228,14 @@ void CommandLineInterface::handleOpcode(string const& _contract)
 {
 	solAssert(CompilerInputModes.count(m_options.input.mode) == 1);
 
+	string opcodes{evmasm::disassemble(m_compiler->object(_contract).bytecode, m_options.output.evmVersion)};
+
 	if (!m_options.output.dir.empty())
-		createFile(m_compiler->filesystemFriendlyName(_contract) + ".opcode", evmasm::disassemble(m_compiler->object(_contract).bytecode, m_options.output.evmVersion));
+		createFile(m_compiler->filesystemFriendlyName(_contract) + ".opcode", opcodes);
 	else
 	{
 		sout() << "Opcodes:" << endl;
-		sout() << std::uppercase << evmasm::disassemble(m_compiler->object(_contract).bytecode, m_options.output.evmVersion);
+		sout() << uppercase << opcodes;
 		sout() << endl;
 	}
 }
@@ -351,8 +384,8 @@ void CommandLineInterface::handleNatspec(bool _natspecDev, string const& _contra
 	solAssert(CompilerInputModes.count(m_options.input.mode) == 1);
 
 	bool enabled = false;
-	std::string suffix;
-	std::string title;
+	string suffix;
+	string title;
 
 	if (_natspecDev)
 	{
@@ -369,7 +402,7 @@ void CommandLineInterface::handleNatspec(bool _natspecDev, string const& _contra
 
 	if (enabled)
 	{
-		std::string output = jsonPrint(
+		string output = jsonPrint(
 			removeNullMembers(
 				_natspecDev ?
 				m_compiler->natspecDev(_contract) :
@@ -461,7 +494,7 @@ void CommandLineInterface::readInputFiles()
 	for (boost::filesystem::path const& allowedDirectory: m_options.input.allowedDirectories)
 		m_fileReader.allowDirectory(allowedDirectory);
 
-	map<std::string, set<boost::filesystem::path>> collisions =
+	map<string, set<boost::filesystem::path>> collisions =
 		m_fileReader.detectSourceUnitNameCollisions(m_options.input.paths);
 	if (!collisions.empty())
 	{
@@ -551,7 +584,7 @@ map<string, Json::Value> CommandLineInterface::parseAstFromInput()
 
 		for (auto& src: ast["sources"].getMemberNames())
 		{
-			std::string astKey = ast["sources"][src].isMember("ast") ? "ast" : "AST";
+			string astKey = ast["sources"][src].isMember("ast") ? "ast" : "AST";
 
 			astAssert(ast["sources"][src].isMember(astKey), "astkey is not member");
 			astAssert(ast["sources"][src][astKey]["nodeType"].asString() == "SourceUnit",  "Top-level node should be a 'SourceUnit'");
@@ -661,7 +694,7 @@ void CommandLineInterface::processInput()
 		serveLSP();
 		break;
 	case InputMode::Assembler:
-		assemble(m_options.assembly.inputLanguage, m_options.assembly.targetMachine);
+		assembleYul(m_options.assembly.inputLanguage, m_options.assembly.targetMachine);
 		break;
 	case InputMode::Linker:
 		link();
@@ -671,6 +704,13 @@ void CommandLineInterface::processInput()
 	case InputMode::CompilerWithASTImport:
 		compile();
 		outputCompilationResults();
+		break;
+	case InputMode::EVMAssemblerJSON:
+		assembleFromEvmAssemblyJson();
+		handleCombinedJSON();
+		handleBytecode("");
+		handleEVMAssembly("");
+		break;
 	}
 }
 
@@ -685,6 +725,27 @@ void CommandLineInterface::printLicense()
 	sout() << otherLicenses << endl;
 	// This is a static variable generated by cmake from LICENSE.txt
 	sout() << licenseText << endl;
+}
+
+void CommandLineInterface::assembleFromEvmAssemblyJson()
+{
+	solAssert(m_options.input.mode == InputMode::EVMAssemblerJSON);
+	try
+	{
+		evmasm::EVMAssemblyStack assemblyStack(m_options.output.evmVersion);
+		Json::Value evmAsmJson;
+		solAssert(m_fileReader.sourceUnits().size() == 1);
+		auto const iter = m_fileReader.sourceUnits().begin();
+		assemblyStack.parseAndAnalyze(iter->first, iter->second);
+		assemblyStack.assemble();
+
+		m_compiler = make_unique<CompilerStack>(m_universalCallback.callback());
+		m_compiler->importFromEVMAssemblyStack(assemblyStack);
+	}
+	catch (evmasm::AssemblyImportException const& _exception)
+	{
+		solThrow(CommandLineExecutionError, "Assembly Import Error: "s + _exception.what());
+	}
 }
 
 void CommandLineInterface::compile()
@@ -850,8 +911,7 @@ void CommandLineInterface::handleCombinedJSON()
 			);
 		if (m_options.compiler.combinedJsonRequests->funDebugRuntime && m_compiler->compilationSuccessful())
 			contractData[g_strFunDebugRuntime] = StandardCompiler::formatFunctionDebugData(
-				m_compiler->runtimeObject(contractName).functionDebugData
-			);
+				m_compiler->runtimeObject(contractName).functionDebugData);
 		if (m_options.compiler.combinedJsonRequests->signatureHashes)
 			contractData[g_strSignatureHashes] = m_compiler->interfaceSymbols(contractName)["methods"];
 		if (m_options.compiler.combinedJsonRequests->natspecDev)
@@ -860,10 +920,9 @@ void CommandLineInterface::handleCombinedJSON()
 			contractData[g_strNatspecUser] = m_compiler->natspecUser(contractName);
 	}
 
-	bool needsSourceList =
-		m_options.compiler.combinedJsonRequests->ast ||
-		m_options.compiler.combinedJsonRequests->srcMap ||
-		m_options.compiler.combinedJsonRequests->srcMapRuntime;
+	bool needsSourceList = m_options.compiler.combinedJsonRequests->ast ||
+							m_options.compiler.combinedJsonRequests->srcMap ||
+							m_options.compiler.combinedJsonRequests->srcMapRuntime;
 	if (needsSourceList)
 	{
 		// Indices into this array are used to abbreviate source names in source locations.
@@ -1029,7 +1088,7 @@ string CommandLineInterface::objectWithLinkRefsHex(evmasm::LinkerObject const& _
 	return out;
 }
 
-void CommandLineInterface::assemble(yul::YulStack::Language _language, yul::YulStack::Machine _targetMachine)
+void CommandLineInterface::assembleYul(yul::YulStack::Language _language, yul::YulStack::Machine _targetMachine)
 {
 	solAssert(m_options.input.mode == InputMode::Assembler);
 
@@ -1159,19 +1218,7 @@ void CommandLineInterface::outputCompilationResults()
 			sout() << endl << "======= " << contract << " =======" << endl;
 
 		// do we need EVM assembly?
-		if (m_options.compiler.outputs.asm_ || m_options.compiler.outputs.asmJson)
-		{
-			string ret;
-			if (m_options.compiler.outputs.asmJson)
-				ret = util::jsonPrint(removeNullMembers(m_compiler->assemblyJSON(contract)), m_options.formatting.json);
-			else
-				ret = m_compiler->assemblyString(contract, m_fileReader.sourceUnits());
-
-			if (!m_options.output.dir.empty())
-				createFile(m_compiler->filesystemFriendlyName(contract) + (m_options.compiler.outputs.asmJson ? "_evm.json" : ".evm"), ret);
-			else
-				sout() << "EVM assembly:" << endl << ret << endl;
-		}
+		handleEVMAssembly(contract);
 
 		if (m_options.compiler.estimateGas)
 			handleGasEstimation(contract);
