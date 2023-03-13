@@ -468,6 +468,7 @@ void CommandLineParser::parseOutputSelection()
 			CompilerOutputs::componentName(&CompilerOutputs::irOptimized),
 			CompilerOutputs::componentName(&CompilerOutputs::ewasm),
 			CompilerOutputs::componentName(&CompilerOutputs::ewasmIR),
+			CompilerOutputs::componentName(&CompilerOutputs::asmJson),
 		};
 		static set<string> const evmAssemblyJsonImportModeOutputs = {
 			CompilerOutputs::componentName(&CompilerOutputs::asm_),

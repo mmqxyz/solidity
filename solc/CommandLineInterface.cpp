@@ -1190,6 +1190,25 @@ void CommandLineInterface::assembleYul(yul::YulStack::Language _language, yul::Y
 			else
 				serr() << "No text representation found." << endl;
 		}
+
+		if (m_options.compiler.outputs.asmJson)
+		{
+			shared_ptr<evmasm::Assembly> assembly{stack.assembleEVMWithDeployed().first};
+			if (assembly)
+			{
+				map<string, unsigned> sourceIndices;
+				if (stack.parserResult() &&
+					stack.parserResult()->debugData && stack.parserResult()->debugData->sourceNames.has_value())
+					for (auto const& iter: *stack.parserResult()->debugData->sourceNames)
+						sourceIndices[*iter.second] = iter.first;
+				else
+					sourceIndices[src.first] = 0;
+
+				sout() << assembly->assemblyJSON(sourceIndices) << endl;
+			}
+			else
+				serr() << "Could not create Assembly JSON representation." << endl;
+		}
 	}
 }
 
