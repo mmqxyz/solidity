@@ -112,6 +112,18 @@ CallGraph FunctionCallGraphBuilder::buildDeployedGraph(
 	return std::move(builder.m_graph);
 }
 
+set<FunctionDefinition const*> FunctionCallGraphBuilder::internalDispatchFunctions(CallGraph const& _graph)
+{
+	set<FunctionDefinition const*> internalFunctions;
+	for (auto const &[caller, dispatchSet]: _graph.edges)
+		if (holds_alternative<CallGraph::SpecialNode>(caller) && get<CallGraph::SpecialNode>(caller) == CallGraph::SpecialNode::InternalDispatch)
+			for (auto const& callee: dispatchSet)
+				if (holds_alternative<CallableDeclaration const*>(callee))
+					if (auto const* functionDefinition = dynamic_cast<FunctionDefinition const*>(get<CallableDeclaration const*>(callee)))
+						internalFunctions.emplace(functionDefinition);
+	return internalFunctions;
+}
+
 bool FunctionCallGraphBuilder::visit(FunctionCall const& _functionCall)
 {
 	if (*_functionCall.annotation().kind != FunctionCallKind::FunctionCall)

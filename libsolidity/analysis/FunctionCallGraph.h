@@ -62,6 +62,7 @@ public:
 		ContractDefinition const& _contract,
 		CallGraph const& _creationGraph
 	);
+	static std::set<FunctionDefinition const*> internalDispatchFunctions(CallGraph const& _graph);
 
 private:
 	FunctionCallGraphBuilder(ContractDefinition const& _contract):

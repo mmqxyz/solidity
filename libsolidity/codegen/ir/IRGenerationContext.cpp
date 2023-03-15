@@ -180,7 +180,10 @@ ABIFunctions IRGenerationContext::abiFunctions()
 
 uint64_t IRGenerationContext::internalFunctionID(FunctionDefinition const& _function, bool _requirePresent)
 {
-	auto [iterator, inserted] = m_functionIDs.try_emplace(_function.id(), m_functionIDs.size() + 1);
+	auto functionID = _function.annotation().internalFunctionID;
+	solAssert(functionID.has_value(), "");
+
+	auto [iterator, inserted] = m_functionIDs.try_emplace(_function.id(), functionID.value());
 	if (_requirePresent)
 			solAssert(!inserted, "");
 	return iterator->second;

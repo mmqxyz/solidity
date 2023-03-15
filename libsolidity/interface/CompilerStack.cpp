@@ -526,6 +526,7 @@ bool CompilerStack::analyze()
 		if (noErrors)
 		{
 			createAndAssignCallGraphs();
+			annotateInternalFunctionIDs();
 			findAndReportCyclicContractDependencies();
 		}
 
@@ -1243,6 +1244,27 @@ void CompilerStack::storeContractDefinitions()
 				if (!m_contracts.count(fullyQualifiedName))
 					m_contracts[fullyQualifiedName].contract = contract;
 			}
+}
+
+void CompilerStack::annotateInternalFunctionIDs()
+{
+	for (Source const* source: m_sourceOrder)
+	{
+		if (!source->ast)
+			continue;
+
+		for (ContractDefinition const* contract: ASTNode::filteredNodes<ContractDefinition>(source->ast->nodes()))
+		{
+			ContractDefinitionAnnotation& annotation =
+				m_contracts.at(contract->fullyQualifiedName()).contract->annotation();
+
+			for (auto function: FunctionCallGraphBuilder::internalDispatchFunctions(**annotation.creationCallGraph))
+				function->annotation().internalFunctionID = function->id();
+
+			for (auto function: FunctionCallGraphBuilder::internalDispatchFunctions(**annotation.deployedCallGraph))
+				function->annotation().internalFunctionID = function->id();
+		}
+	}
 }
 
 namespace
