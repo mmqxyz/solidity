@@ -21,5 +21,5 @@ contract C {
 // TypeError 8838: (396-405): The number is out of range of type int16 accepted by the suffix function.
 // TypeError 8838: (415-424): The number is out of range of type uint16 accepted by the suffix function.
 // TypeError 8838: (434-516): The number is out of range of type int256 accepted by the suffix function.
-// TypeError 5503: (536-619): This number cannot be decomposed into a mantissa and decimal exponent that fit the range of parameters of any possible suffix function. The mantissa is out of range of the largest supported integer type.
+// TypeError 5503: (536-619): The literal is out of range of any supported integer type.
 // TypeError 8838: (536-619): The number is out of range of type uint256 accepted by the suffix function.

@@ -21,11 +21,11 @@ contract C {
     }
 }
 // ----
-// TypeError 5503: (401-410): This number cannot be decomposed into a mantissa and decimal exponent that fit the range of parameters of any possible suffix function. The mantissa is out of range of the largest supported integer type.
-// TypeError 5503: (420-430): This number cannot be decomposed into a mantissa and decimal exponent that fit the range of parameters of any possible suffix function. The mantissa is out of range of the largest supported integer type.
-// TypeError 5503: (440-451): This number cannot be decomposed into a mantissa and decimal exponent that fit the range of parameters of any possible suffix function. The mantissa is out of range of the largest supported integer type.
-// TypeError 5503: (462-543): This number cannot be decomposed into a mantissa and decimal exponent that fit the range of parameters of any possible suffix function. The mantissa is out of range of the largest supported integer type.
-// TypeError 5503: (565-647): This number cannot be decomposed into a mantissa and decimal exponent that fit the range of parameters of any possible suffix function. The mantissa is out of range of the largest supported integer type.
-// TypeError 5503: (668-751): This number cannot be decomposed into a mantissa and decimal exponent that fit the range of parameters of any possible suffix function. The mantissa is out of range of the largest supported integer type.
+// TypeError 5503: (401-410): The literal is out of range of any supported integer type.
+// TypeError 5503: (420-430): The literal is out of range of any supported integer type.
+// TypeError 5503: (440-451): The literal is out of range of any supported integer type.
+// TypeError 5503: (462-543): The literal is out of range of any supported integer type.
+// TypeError 5503: (565-647): The literal is out of range of any supported integer type.
+// TypeError 5503: (668-751): The literal is out of range of any supported integer type.
 // TypeError 8838: (811-820): This number cannot be decomposed into a mantissa and decimal exponent that fit the range of parameters of the suffix function. The exponent is out of range of type uint8.
 // TypeError 8838: (830-845): This number cannot be decomposed into a mantissa and decimal exponent that fit the range of parameters of the suffix function. The mantissa is out of range of type int8.The exponent is out of range of type uint8.

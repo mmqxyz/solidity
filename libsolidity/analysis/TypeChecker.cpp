@@ -3977,30 +3977,33 @@ bool TypeChecker::visit(Literal const& _literal)
 	auto const* literalRationalType = dynamic_cast<RationalNumberType const*>(literalType);
 	if (_literal.isSuffixed() && !_literal.hasSubDenomination() && literalRationalType)
 	{
-		auto&& [mantissa, exponent] = literalRationalType->mantissaExponent();
-
-		if (!mantissa || !exponent)
+		optional<string> rangeErrorMessage;
+		if (!literalRationalType->mobileType())
+			rangeErrorMessage = "The literal is out of range of any supported integer type.";
+		else
 		{
-			string mantissaOrExponentErrorMessage;
+			auto&& [mantissa, exponent] = literalRationalType->mantissaExponent();
+			if (!mantissa || !exponent)
+			{
+				string mantissaOrExponentErrorMessage;
+				if (!mantissa && !exponent)
+					mantissaOrExponentErrorMessage = "The mantissa and the exponent are";
+				else if (!exponent)
+					mantissaOrExponentErrorMessage = "The exponent is";
+				else
+					mantissaOrExponentErrorMessage = "The mantissa is";
 
-			if (!mantissa && !exponent)
-				mantissaOrExponentErrorMessage = "The mantissa and the exponent are";
-			else if (!exponent)
-				mantissaOrExponentErrorMessage = "The exponent is";
-			else
-				mantissaOrExponentErrorMessage = "The mantissa is";
-
-			m_errorReporter.typeError(
-				5503_error,
-				_literal.location(),
-				fmt::format(
+				rangeErrorMessage = fmt::format(
 					"This number cannot be decomposed into a mantissa and decimal exponent "
 					"that fit the range of parameters of any possible suffix function. "
 					"{} out of range of the largest supported integer type.",
 					mantissaOrExponentErrorMessage
-				)
-			);
+				);
+			}
 		}
+
+		if (rangeErrorMessage.has_value())
+			m_errorReporter.typeError(5503_error, _literal.location(), rangeErrorMessage.value());
 	}
 
 	// NOTE: For suffixed literals this is not the final type yet. We will update it in endVisit()
