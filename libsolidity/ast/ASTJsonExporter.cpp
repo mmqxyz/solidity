@@ -469,8 +469,8 @@ bool ASTJsonExporter::visit(FunctionDefinition const& _node)
 	if (!_node.annotation().baseFunctions.empty())
 		attributes.emplace_back(make_pair("baseFunctions", getContainerIds(_node.annotation().baseFunctions, true)));
 
-	if (auto internalFunctionID = _node.annotation().internalFunctionID)
-		attributes.emplace_back("internalFunctionID", internalFunctionID.value());
+	if (_node.annotation().internalFunctionID.set())
+		attributes.emplace_back("internalFunctionID", **_node.annotation().internalFunctionID);
 
 	setJsonNode(_node, "FunctionDefinition", std::move(attributes));
 	return false;

@@ -1257,11 +1257,19 @@ void CompilerStack::annotateInternalFunctionIDs()
 		{
 			ContractDefinitionAnnotation& annotation = contract->annotation();
 
-			for (auto function: FunctionCallGraphBuilder::internalDispatchFunctions(**annotation.creationCallGraph))
-				function->annotation().internalFunctionID = function->id();
-
-			for (auto function: FunctionCallGraphBuilder::internalDispatchFunctions(**annotation.deployedCallGraph))
-				function->annotation().internalFunctionID = function->id();
+			uint64_t internalFunctionID = 0;
+			if (auto const* deployTimeInternalDispatch = util::valueOrNullptr((*annotation.deployedCallGraph)->edges, CallGraph::SpecialNode::InternalDispatch))
+				for (auto const& node: *deployTimeInternalDispatch)
+					if (auto const* callable = get_if<CallableDeclaration const*>(&node))
+						if (auto const* function = dynamic_cast<FunctionDefinition const*>(*callable))
+							if (!function->annotation().internalFunctionID.set())
+								function->annotation().internalFunctionID = internalFunctionID++;
+			if (auto const* creationTimeInternalDispatch = util::valueOrNullptr((*annotation.creationCallGraph)->edges, CallGraph::SpecialNode::InternalDispatch))
+				for (auto const& node: *creationTimeInternalDispatch)
+					if (auto const* callable = get_if<CallableDeclaration const*>(&node))
+						if (auto const* function = dynamic_cast<FunctionDefinition const*>(*callable))
+							// Make sure the function already got an ID since it also occurs in the deploy-time internal dispatch.
+							solAssert(*function->annotation().internalFunctionID);
 		}
 	}
 }

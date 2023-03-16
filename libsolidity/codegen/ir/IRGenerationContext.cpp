@@ -180,8 +180,6 @@ ABIFunctions IRGenerationContext::abiFunctions()
 
 uint64_t IRGenerationContext::internalFunctionID(FunctionDefinition const& _function)
 {
-	auto functionID = _function.annotation().internalFunctionID;
-	solAssert(functionID.has_value(), "");
-
-	return functionID.value();
+	solAssert(_function.annotation().internalFunctionID.set(), "");
+	return **_function.annotation().internalFunctionID;
 }

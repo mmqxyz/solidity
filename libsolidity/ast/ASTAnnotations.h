@@ -178,7 +178,7 @@ struct CallableDeclarationAnnotation: DeclarationAnnotation
 
 struct FunctionDefinitionAnnotation: CallableDeclarationAnnotation, StructurallyDocumentedAnnotation
 {
-	std::optional<uint64_t> internalFunctionID;
+	util::SetOnce<std::optional<uint64_t>> internalFunctionID;
 };
 
 struct EventDefinitionAnnotation: CallableDeclarationAnnotation, StructurallyDocumentedAnnotation
