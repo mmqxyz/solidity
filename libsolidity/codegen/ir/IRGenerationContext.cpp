@@ -178,19 +178,10 @@ ABIFunctions IRGenerationContext::abiFunctions()
 	return ABIFunctions(m_evmVersion, m_revertStrings, m_functions);
 }
 
-uint64_t IRGenerationContext::internalFunctionID(FunctionDefinition const& _function, bool _requirePresent)
+uint64_t IRGenerationContext::internalFunctionID(FunctionDefinition const& _function)
 {
 	auto functionID = _function.annotation().internalFunctionID;
 	solAssert(functionID.has_value(), "");
 
-	auto [iterator, inserted] = m_functionIDs.try_emplace(_function.id(), functionID.value());
-	if (_requirePresent)
-			solAssert(!inserted, "");
-	return iterator->second;
-}
-
-void IRGenerationContext::copyFunctionIDsFrom(IRGenerationContext const& _other)
-{
-	solAssert(m_functionIDs.empty(), "");
-	m_functionIDs = _other.m_functionIDs;
+	return functionID.value();
 }
