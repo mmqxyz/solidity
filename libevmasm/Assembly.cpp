@@ -486,6 +486,16 @@ Json::Value Assembly::assemblyJSON(map<string, unsigned> const& _sourceIndices, 
 	{
 		root["sourceList"] = Json::arrayValue;
 		Json::Value& jsonSourceList = root["sourceList"];
+
+		// it is possible that we got incomplete source-indices.
+		// this may happen, e.g. if we import the json from yul.
+		unsigned max_index = 0;
+		for (auto const& [name, index]: _sourceIndices)
+			if (max_index < index)
+				max_index = index;
+		for (unsigned index = 0; index < max_index; ++index)
+			jsonSourceList[index] = "<unknown>";
+
 		for (auto const& [name, index]: _sourceIndices)
 			jsonSourceList[index] = name;
 	}

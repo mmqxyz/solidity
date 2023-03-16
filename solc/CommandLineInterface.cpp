@@ -1204,7 +1204,7 @@ void CommandLineInterface::assembleYul(yul::YulStack::Language _language, yul::Y
 				else
 					sourceIndices[src.first] = 0;
 
-				sout() << assembly->assemblyJSON(sourceIndices) << endl;
+				sout() << util::jsonPrint(removeNullMembers(assembly->assemblyJSON(sourceIndices)), m_options.formatting.json) << endl;
 			}
 			else
 				serr() << "Could not create Assembly JSON representation." << endl;
