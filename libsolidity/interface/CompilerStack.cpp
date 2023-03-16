@@ -1255,8 +1255,7 @@ void CompilerStack::annotateInternalFunctionIDs()
 
 		for (ContractDefinition const* contract: ASTNode::filteredNodes<ContractDefinition>(source->ast->nodes()))
 		{
-			ContractDefinitionAnnotation& annotation =
-				m_contracts.at(contract->fullyQualifiedName()).contract->annotation();
+			ContractDefinitionAnnotation& annotation = contract->annotation();
 
 			for (auto function: FunctionCallGraphBuilder::internalDispatchFunctions(**annotation.creationCallGraph))
 				function->annotation().internalFunctionID = function->id();
