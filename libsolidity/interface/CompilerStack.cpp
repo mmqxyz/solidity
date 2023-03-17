@@ -1269,7 +1269,7 @@ void CompilerStack::annotateInternalFunctionIDs()
 					if (auto const* callable = get_if<CallableDeclaration const*>(&node))
 						if (auto const* function = dynamic_cast<FunctionDefinition const*>(*callable))
 							// Make sure the function already got an ID since it also occurs in the deploy-time internal dispatch.
-							solAssert(*function->annotation().internalFunctionID);
+							solAssert(function->annotation().internalFunctionID.set());
 		}
 	}
 }
