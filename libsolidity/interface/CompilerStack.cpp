@@ -1248,6 +1248,7 @@ void CompilerStack::storeContractDefinitions()
 
 void CompilerStack::annotateInternalFunctionIDs()
 {
+	uint64_t internalFunctionID = 1;
 	for (Source const* source: m_sourceOrder)
 	{
 		if (!source->ast)
@@ -1257,7 +1258,6 @@ void CompilerStack::annotateInternalFunctionIDs()
 		{
 			ContractDefinitionAnnotation& annotation = contract->annotation();
 
-			uint64_t internalFunctionID = 0;
 			if (auto const* deployTimeInternalDispatch = util::valueOrNullptr((*annotation.deployedCallGraph)->edges, CallGraph::SpecialNode::InternalDispatch))
 				for (auto const& node: *deployTimeInternalDispatch)
 					if (auto const* callable = get_if<CallableDeclaration const*>(&node))
