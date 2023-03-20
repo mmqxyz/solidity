@@ -163,10 +163,6 @@ public:
 	bool memoryUnsafeInlineAssemblySeen() const { return m_memoryUnsafeInlineAssemblySeen; }
 	void setMemoryUnsafeInlineAssemblySeen() { m_memoryUnsafeInlineAssemblySeen = true; }
 
-	/// @returns the runtime ID to be used for the function in the dispatch routine
-	/// and for internal function pointers.
-	uint64_t internalFunctionID(FunctionDefinition const& _function);
-
 	std::map<std::string, unsigned> const& sourceIndices() const { return m_sourceIndices; }
 	void markSourceUsed(std::string const& _name) { m_usedSourceNames.insert(_name); }
 	std::set<std::string> const& usedSourceNames() const { return m_usedSourceNames; }

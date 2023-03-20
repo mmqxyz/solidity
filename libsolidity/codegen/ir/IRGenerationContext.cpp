@@ -177,9 +177,3 @@ ABIFunctions IRGenerationContext::abiFunctions()
 {
 	return ABIFunctions(m_evmVersion, m_revertStrings, m_functions);
 }
-
-uint64_t IRGenerationContext::internalFunctionID(FunctionDefinition const& _function)
-{
-	solAssert(_function.annotation().internalFunctionID.set(), "");
-	return **_function.annotation().internalFunctionID;
-}
