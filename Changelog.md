@@ -12,6 +12,10 @@ Compiler Features:
 Bugfixes:
 
 
+AST Changes:
+ * AST: add ``internalFunctionID`` annotation to AST node of internal functions.
+
+
 ### 0.8.19 (2023-02-22)
 
 Language Features:
